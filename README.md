@@ -51,9 +51,15 @@ I picked [ADK](https://google.github.io/adk-docs/) over raw API calls or other f
 - **Agents share state cleanly.** Specialists write findings to session state with `output_key`; the verifier reads them straight from its instruction template. No glue code.
 - **Model-agnostic.** It runs on Gemini out of the box (cheap and fast for this workload), but ADK can point at other models without rewriting the pipeline.
 
-## Use it on your own repo
+## Three ways to use this
 
-**1.** Get a free Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey) and add it to your repo secrets as `GEMINI_API_KEY`.
+Whichever way you pick, you need one thing first: a free Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey).
+
+### 1. Reference it as a GitHub Action (recommended)
+
+No cloning, no copying code. GitHub fetches this repo automatically when your workflow runs — the same way `actions/checkout` works.
+
+**1.** Add your Gemini key to your repo secrets as `GEMINI_API_KEY` (Settings → Secrets and variables → Actions).
 
 **2.** Add `.github/workflows/pr-review.yml`:
 
@@ -77,9 +83,46 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-That's it. The next PR gets reviewed.
+That's it. The next PR gets reviewed. Pin to `@v1` for stability, or use `@main` if you want the latest.
 
-### Configuration
+### 2. Vendor it into your repo
+
+If you'd rather own the code (company policy, or you want to tweak the prompts), copy this whole repo into your project — for example under `.github/actions/ai-pr-reviewer/` — and point the workflow at the local path instead:
+
+```yaml
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/ai-pr-reviewer
+        with:
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+```
+
+Note the extra `checkout` step: with a local action, your repo has to be checked out before the action can be found. This is exactly how this repo reviews itself (`uses: ./` in [pr-review.yml](.github/workflows/pr-review.yml)). The prompts live in [`src/reviewer/agents.py`](src/reviewer/agents.py) if you want to adjust what the specialists look for.
+
+### 3. Clone it and run from your terminal
+
+No GitHub Actions involved — it's a normal Python package with a CLI. Useful for trying it out, or reviewing a PR ad hoc:
+
+```bash
+git clone https://github.com/zumrywahid/ai-pr-reviewer
+cd ai-pr-reviewer
+pip install -e ".[dev]"
+
+export GEMINI_API_KEY=your-key
+export GITHUB_TOKEN=your-token   # any token that can read the repo / post comments
+
+# Print findings without posting anything
+python -m reviewer --repo owner/name --pr 42 --dry-run
+
+# Post the review for real
+python -m reviewer --repo owner/name --pr 42
+```
+
+`--dry-run` prints the findings instead of posting them — useful for tuning prompts. Run the tests with `pytest`.
+
+## Configuration
+
+These are the action inputs (modes 1 and 2). The CLI takes the same options as flags — see `python -m reviewer --help`.
 
 | Input | Default | What it does |
 |---|---|---|
@@ -101,22 +144,6 @@ It's not a replacement for human review. It's a floor — nothing below a certai
 ## Cost
 
 Each PR review makes 4 model calls (3 specialists + 1 verifier) over the diff. On Gemini Flash that's typically under a cent per PR, and the free tier covers a hobby project comfortably.
-
-## Running locally
-
-```bash
-git clone https://github.com/zumrywahid/ai-pr-reviewer
-cd ai-pr-reviewer
-pip install -e ".[dev]"
-
-export GEMINI_API_KEY=your-key
-export GITHUB_TOKEN=your-token
-
-# Review any PR from your terminal
-python -m reviewer --repo owner/name --pr 42 --dry-run
-```
-
-`--dry-run` prints the findings instead of posting them — useful for tuning prompts. Run the tests with `pytest`.
 
 ## Project structure
 
