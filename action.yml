@@ -1,0 +1,55 @@
+name: "AI PR Reviewer"
+description: >-
+  Multi-agent AI code review built on Google ADK: three specialist agents
+  (correctness, security, test coverage) review the PR in parallel, an
+  adversarial verifier drops weak findings, and the survivors are posted
+  as review comments.
+author: "Zumry Wahid"
+
+branding:
+  icon: "eye"
+  color: "blue"
+
+inputs:
+  gemini_api_key:
+    description: "Gemini API key used by the review agents"
+    required: true
+  github_token:
+    description: "Token used to read the diff and post comments (secrets.GITHUB_TOKEN works)"
+    required: true
+  model:
+    description: "Model used by all agents"
+    required: false
+    default: "gemini-2.5-flash"
+  max_findings:
+    description: "Cap on findings posted per PR"
+    required: false
+    default: "10"
+  skip_labels:
+    description: "Comma-separated PR labels that skip the review"
+    required: false
+    default: "no-ai-review"
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Install reviewer
+      shell: bash
+      run: pip install --quiet "${{ github.action_path }}"
+
+    - name: Review pull request
+      shell: bash
+      env:
+        GEMINI_API_KEY: ${{ inputs.gemini_api_key }}
+        GITHUB_TOKEN: ${{ inputs.github_token }}
+      run: |
+        python -m reviewer \
+          --repo "${{ github.repository }}" \
+          --pr "${{ github.event.pull_request.number }}" \
+          --model "${{ inputs.model }}" \
+          --max-findings "${{ inputs.max_findings }}" \
+          --skip-labels "${{ inputs.skip_labels }}"
