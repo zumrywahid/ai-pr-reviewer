@@ -24,7 +24,7 @@ def _parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--repo", required=True, help="owner/name, e.g. zumrywahid/ai-pr-reviewer")
     parser.add_argument("--pr", required=True, type=int, help="pull request number")
-    parser.add_argument("--model", default="gemini-2.5-flash", help="model used by all agents")
+    parser.add_argument("--model", default="gemini-3.5-flash", help="model used by all agents")
     parser.add_argument("--max-findings", type=int, default=10, help="cap on findings posted per PR")
     parser.add_argument(
         "--skip-labels",

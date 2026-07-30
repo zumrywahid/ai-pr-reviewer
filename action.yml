@@ -20,7 +20,7 @@ inputs:
   model:
     description: "Model used by all agents"
     required: false
-    default: "gemini-2.5-flash"
+    default: "gemini-3.5-flash"
   max_findings:
     description: "Cap on findings posted per PR"
     required: false
