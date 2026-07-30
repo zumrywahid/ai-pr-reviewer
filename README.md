@@ -128,7 +128,7 @@ These are the action inputs (modes 1 and 2). The CLI takes the same options as f
 |---|---|---|
 | `gemini_api_key` | *(required)* | Gemini API key for the agents |
 | `github_token` | *(required)* | Token used to read the diff and post comments |
-| `model` | `gemini-2.5-flash` | Model used by all agents |
+| `model` | `gemini-3.5-flash` | Model used by all agents |
 | `max_findings` | `10` | Cap on comments posted per PR |
 | `skip_labels` | `no-ai-review` | PRs with this label are skipped |
 
